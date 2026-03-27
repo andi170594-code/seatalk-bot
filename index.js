@@ -2,34 +2,37 @@ const express = require("express");
 const axios = require("axios");
 
 const app = express();
+
+// ❗ INI PENTING BANGET
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 3000;
 
-// ❗ WAJIB ISI INI
 const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
 
 app.post("/webhook", async (req, res) => {
-    const body = req.body;
+    console.log("HEADERS:", req.headers);
+    console.log("BODY:", req.body);
 
-    console.log("Incoming:", JSON.stringify(body));
+    // ✅ HANDLE SEMUA KEMUNGKINAN FORMAT
+    const challenge =
+        req.body?.seatalk_challenge ||
+        req.body?.event?.seatalk_challenge ||
+        req.query?.seatalk_challenge;
 
-    // ✅ FIX VERIFIKASI (INI YANG PENTING)
-    const challenge = body.seatalk_challenge || body.event?.seatalk_challenge;
-
+    // 🔥 WAJIB RETURN STRING TANPA JSON
     if (challenge) {
-        console.log("Challenge received:", challenge);
-        return res.status(200).send(challenge);
+        console.log("Challenge OK:", challenge);
+        return res.status(200).send(String(challenge));
     }
 
     try {
-        // ✅ HANDLE MESSAGE
-        if (body.event_type === "message.receive") {
-            const chat_id = body.event?.message?.chat_id;
+        if (req.body.event_type === "message.receive") {
+            const chat_id = req.body.event?.message?.chat_id;
 
             if (!chat_id) return res.sendStatus(200);
 
-            // 🔥 AUTO REPLY
             await axios.post(
                 "https://openapi.seatalk.io/open-apis/message/v2/send/",
                 {
@@ -45,16 +48,16 @@ app.post("/webhook", async (req, res) => {
                 }
             );
 
-            console.log("Replied: Approved");
+            console.log("Replied Approved");
         }
 
     } catch (err) {
-        console.error("Error:", err.response?.data || err.message);
+        console.error("ERROR:", err.response?.data || err.message);
     }
 
     res.sendStatus(200);
 });
 
 app.listen(PORT, () => {
-    console.log("Server running on port " + PORT);
+    console.log("Server running on port", PORT);
 });
