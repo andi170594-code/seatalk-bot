@@ -2,19 +2,18 @@ const express = require("express");
 
 const app = express();
 
-// ❗ pakai RAW body (INI KUNCI)
+// ❗ RAW BODY biar gak crash
 app.use(express.text({ type: "*/*" }));
 
 app.post("/webhook", (req, res) => {
-    console.log("RAW BODY:", req.body);
-
     try {
-        // coba parse kalau JSON
-        let data;
+        console.log("RAW:", req.body);
+
+        let data = {};
         try {
             data = JSON.parse(req.body);
-        } catch {
-            data = {};
+        } catch (e) {
+            console.log("Not JSON, skip parse");
         }
 
         const challenge =
@@ -22,15 +21,16 @@ app.post("/webhook", (req, res) => {
             data.event?.seatalk_challenge;
 
         if (challenge) {
-            console.log("Challenge OK:", challenge);
+            console.log("Challenge:", challenge);
             return res.status(200).send(challenge);
         }
 
-    } catch (err) {
-        console.log("Error parsing:", err);
-    }
+        return res.status(200).send("ok");
 
-    return res.send("ok");
+    } catch (err) {
+        console.log("ERROR:", err);
+        return res.status(200).send("ok"); // ❗ jangan sampai 502 lagi
+    }
 });
 
 app.listen(3000, () => {
