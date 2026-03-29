@@ -1,13 +1,20 @@
 const http = require("http");
 
 const server = http.createServer((req, res) => {
-    // 🔥 TEST ENDPOINT
-    if (req.method === "GET" && req.url === "/test") {
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        return res.end("TEST_OK");
+
+    // ✅ TEST ENDPOINT (buat cek response exact)
+    if (req.method === "GET" && req.url === "/test-challenge") {
+        const challenge = "ABC123";
+
+        res.writeHead(200, {
+            "Content-Type": "text/plain",
+            "Content-Length": Buffer.byteLength(challenge)
+        });
+
+        return res.end(challenge);
     }
 
-    // 🔥 WEBHOOK
+    // ✅ WEBHOOK SEATALK
     if (req.method === "POST" && req.url === "/webhook") {
         let body = "";
 
@@ -19,7 +26,6 @@ const server = http.createServer((req, res) => {
             try {
                 const data = JSON.parse(body);
 
-                // ✅ VERIFICATION
                 if (data.event_type === "event_verification") {
                     const challenge = data.event.seatalk_challenge;
 
@@ -31,9 +37,7 @@ const server = http.createServer((req, res) => {
                     return res.end(challenge);
                 }
 
-            } catch (e) {
-                console.log("ERROR:", e);
-            }
+            } catch (e) {}
 
             res.writeHead(200);
             res.end("ok");
