@@ -1,20 +1,18 @@
 const http = require("http");
+const querystring = require("querystring");
 
 const server = http.createServer((req, res) => {
 
-    // ✅ TEST ENDPOINT (buat cek response exact)
+    // TEST
     if (req.method === "GET" && req.url === "/test-challenge") {
         const challenge = "ABC123";
-
         res.writeHead(200, {
             "Content-Type": "text/plain",
             "Content-Length": Buffer.byteLength(challenge)
         });
-
         return res.end(challenge);
     }
 
-    // ✅ WEBHOOK SEATALK
     if (req.method === "POST" && req.url === "/webhook") {
         let body = "";
 
@@ -23,21 +21,32 @@ const server = http.createServer((req, res) => {
         });
 
         req.on("end", () => {
+            console.log("RAW BODY:", body);
+
+            let challenge = null;
+
+            // ✅ 1. Coba JSON
             try {
                 const data = JSON.parse(body);
-
                 if (data.event_type === "event_verification") {
-                    const challenge = data.event.seatalk_challenge;
-
-                    res.writeHead(200, {
-                        "Content-Type": "text/plain",
-                        "Content-Length": Buffer.byteLength(challenge)
-                    });
-
-                    return res.end(challenge);
+                    challenge = data.event?.seatalk_challenge;
                 }
+            } catch {}
 
-            } catch (e) {}
+            // ✅ 2. Coba FORM (fallback)
+            if (!challenge) {
+                const parsed = querystring.parse(body);
+                challenge = parsed.seatalk_challenge;
+            }
+
+            // 🔥 RETURN EXACT
+            if (challenge) {
+                res.writeHead(200, {
+                    "Content-Type": "text/plain",
+                    "Content-Length": Buffer.byteLength(challenge)
+                });
+                return res.end(challenge);
+            }
 
             res.writeHead(200);
             res.end("ok");
