@@ -1,22 +1,43 @@
 const express = require("express");
+const axios = require("axios");
 
 const app = express();
 app.use(express.json());
 
-app.post("/webhook", (req, res) => {
+const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
+
+app.post("/webhook", async (req, res) => {
     const body = req.body;
 
-    // ✅ VERIFICATION
+    // ✅ VERIFICATION (JANGAN DIHAPUS)
     if (body.event_type === "event_verification") {
         return res.status(200).json({
             seatalk_challenge: body.event.seatalk_challenge
         });
     }
 
+    // 🔥 AUTO REPLY
+    if (body.event_type === "message.receive") {
+        const chat_id = body.event.message.chat_id;
+
+        await axios.post(
+            "https://openapi.seatalk.io/open-apis/message/v2/send/",
+            {
+                chat_id: chat_id,
+                text: "Approved",
+                msg_type: "text"
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${BOT_TOKEN}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+    }
+
     return res.sendStatus(200);
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running...");
-});
+app.listen(PORT, "0.0.0.0");
