@@ -4,7 +4,11 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
+// ❗ WAJIB: isi dengan BOT TOKEN (bukan signing secret)
 const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
+
+// ✅ BASE URL YANG BENAR (ENV LU)
+const BASE_URL = "https://openapi.seatalk.dev/open-apis/message/v2/send/";
 
 app.post("/webhook", async (req, res) => {
     const body = req.body;
@@ -19,15 +23,18 @@ app.post("/webhook", async (req, res) => {
     }
 
     try {
-        // 🔥 PERSONAL
-        if (body.event_type === "message_from_bot_subscriber") {
+        // 🔥 PERSONAL CHAT (1-on-1)
+        if (
+            body.event_type === "message_from_bot_subscriber" ||
+            body.event_type === "user_enter_chatroom_with_bot"
+        ) {
             const seatalk_id = body.event?.seatalk_id;
 
             console.log("PERSONAL:", seatalk_id);
 
             if (seatalk_id) {
-                await axios.post(
-                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
+                const response = await axios.post(
+                    BASE_URL,
                     {
                         receive_id: seatalk_id,
                         receive_id_type: "seatalk_id",
@@ -41,18 +48,20 @@ app.post("/webhook", async (req, res) => {
                         }
                     }
                 );
+
+                console.log("SEND SUCCESS PERSONAL:", response.data);
             }
         }
 
-        // 🔥 GROUP
+        // 🔥 GROUP (MENTION)
         if (body.event_type === "new_mentioned_message_received_from_group_chat") {
             const group_id = body.event?.group_id;
 
             console.log("GROUP:", group_id);
 
             if (group_id) {
-                await axios.post(
-                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
+                const response = await axios.post(
+                    BASE_URL,
                     {
                         receive_id: group_id,
                         receive_id_type: "group_id",
@@ -66,6 +75,8 @@ app.post("/webhook", async (req, res) => {
                         }
                     }
                 );
+
+                console.log("SEND SUCCESS GROUP:", response.data);
             }
         }
 
