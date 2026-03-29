@@ -2,26 +2,30 @@ const express = require("express");
 
 const app = express();
 
-// ❗ RAW body
-app.use(express.text({ type: "*/*" }));
+// ✅ Pakai JSON parser (INI KUNCI)
+app.use(express.json());
 
 app.post("/webhook", (req, res) => {
-    try {
-        const body = req.body;
-        const data = JSON.parse(body);
+    const body = req.body;
 
-        if (data.event_type === "event_verification") {
-            const challenge = data.event.seatalk_challenge;
+    // 🔥 HANDLE VERIFICATION
+    if (body.event_type === "event_verification") {
+        const challenge = body.event?.seatalk_challenge;
 
-            // 🔥 RETURN TANPA HEADER TAMBAHAN
-            return res.end(challenge);
+        if (challenge) {
+            // ❗ HARUS TEXT PLAIN & EXACT
+            res.setHeader("Content-Type", "text/plain");
+            return res.status(200).send(challenge);
         }
+    }
 
-    } catch (e) {}
-
-    return res.end("ok");
+    // default response
+    return res.sendStatus(200);
 });
 
+// ❗ PORT WAJIB DARI RAILWAY
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, "0.0.0.0");
+app.listen(PORT, "0.0.0.0", () => {
+    console.log("Running on", PORT);
+});
