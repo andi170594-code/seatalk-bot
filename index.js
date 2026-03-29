@@ -1,40 +1,55 @@
 const express = require("express");
 const axios = require("axios");
+const crypto = require("crypto");
 
 const app = express();
-app.use(express.json());
 
-// ❗ WAJIB: isi dengan BOT TOKEN (bukan signing secret)
+// 🔥 RAW BODY (WAJIB)
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
+
 const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
+const SIGNING_SECRET = "euaKbA93Qv6fNJdkvyYlpOfA6EVuAOhN";
 
-// ✅ BASE URL YANG BENAR (ENV LU)
-const BASE_URL = "https://openapi.seatalk.dev/open-apis/message/v2/send/";
+// ✅ VALIDATE SIGNATURE
+function isValidSignature(body, signature) {
+    const hash = crypto
+        .createHash("sha256")
+        .update(Buffer.concat([body, Buffer.from(SIGNING_SECRET)]))
+        .digest("hex");
+
+    return hash === signature;
+}
 
 app.post("/webhook", async (req, res) => {
+    const signature = req.headers["signature"];
+
+    // 🔥 VALIDASI
+    if (!isValidSignature(req.rawBody, signature)) {
+        console.log("❌ INVALID SIGNATURE");
+        return res.sendStatus(403);
+    }
+
     const body = req.body;
 
     console.log("FULL EVENT:", JSON.stringify(body));
 
     // ✅ VERIFICATION
     if (body.event_type === "event_verification") {
-        return res.status(200).json({
-            seatalk_challenge: body.event.seatalk_challenge
-        });
+        return res.status(200).json(body.event);
     }
 
     try {
-        // 🔥 PERSONAL CHAT (1-on-1)
-        if (
-            body.event_type === "message_from_bot_subscriber" ||
-            body.event_type === "user_enter_chatroom_with_bot"
-        ) {
+        // 🔥 PERSONAL CHAT
+        if (body.event_type === "message_from_bot_subscriber") {
             const seatalk_id = body.event?.seatalk_id;
-
-            console.log("PERSONAL:", seatalk_id);
 
             if (seatalk_id) {
                 const response = await axios.post(
-                    BASE_URL,
+                    "https://openapi.seatalk.dev/open-apis/message/v2/send/",
                     {
                         receive_id: seatalk_id,
                         receive_id_type: "seatalk_id",
@@ -49,19 +64,17 @@ app.post("/webhook", async (req, res) => {
                     }
                 );
 
-                console.log("SEND SUCCESS PERSONAL:", response.data);
+                console.log("✅ PERSONAL SENT:", response.data);
             }
         }
 
-        // 🔥 GROUP (MENTION)
+        // 🔥 GROUP
         if (body.event_type === "new_mentioned_message_received_from_group_chat") {
             const group_id = body.event?.group_id;
 
-            console.log("GROUP:", group_id);
-
             if (group_id) {
                 const response = await axios.post(
-                    BASE_URL,
+                    "https://openapi.seatalk.dev/open-apis/message/v2/send/",
                     {
                         receive_id: group_id,
                         receive_id_type: "group_id",
@@ -76,12 +89,12 @@ app.post("/webhook", async (req, res) => {
                     }
                 );
 
-                console.log("SEND SUCCESS GROUP:", response.data);
+                console.log("✅ GROUP SENT:", response.data);
             }
         }
 
     } catch (err) {
-        console.log("SEND ERROR:", err.response?.data || err.message);
+        console.log("❌ SEND ERROR:", err.response?.data || err.message);
     }
 
     return res.sendStatus(200);
