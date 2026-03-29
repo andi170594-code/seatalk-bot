@@ -4,7 +4,7 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-// ❗ WAJIB GANTI INI
+// ❗ WAJIB ISI TOKEN BOT ASLI (BUKAN SIGNING SECRET)
 const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
 
 app.post("/webhook", async (req, res) => {
@@ -12,7 +12,7 @@ app.post("/webhook", async (req, res) => {
 
     console.log("FULL EVENT:", JSON.stringify(body));
 
-    // ✅ VERIFICATION (WAJIB ADA)
+    // ✅ VERIFICATION
     if (body.event_type === "event_verification") {
         return res.status(200).json({
             seatalk_challenge: body.event.seatalk_challenge
@@ -21,10 +21,10 @@ app.post("/webhook", async (req, res) => {
 
     try {
         // 🔥 PERSONAL CHAT (1 ON 1)
-        if (body.event_type === "user_enter_chatroom_with_bot") {
+        if (body.event_type === "message_from_bot_subscriber") {
             const seatalk_id = body.event?.seatalk_id;
 
-            console.log("PERSONAL CHAT:", seatalk_id);
+            console.log("PERSONAL:", seatalk_id);
 
             if (seatalk_id) {
                 await axios.post(
@@ -45,11 +45,9 @@ app.post("/webhook", async (req, res) => {
             }
         }
 
-        // 🔥 GROUP CHAT
-        if (body.event_type === "message.receive") {
-            const thread_id =
-                body.event?.thread_id ||
-                body.event?.message?.thread_id;
+        // 🔥 GROUP (MENTION)
+        if (body.event_type === "new_mentioned_message_received_from_group_chat") {
+            const thread_id = body.event?.message?.thread_id;
 
             console.log("GROUP THREAD:", thread_id);
 
