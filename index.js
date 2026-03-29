@@ -4,7 +4,7 @@ const crypto = require("crypto");
 
 const app = express();
 
-// 🔥 RAW BODY (WAJIB)
+// RAW BODY
 app.use(express.json({
     verify: (req, res, buf) => {
         req.rawBody = buf;
@@ -14,7 +14,7 @@ app.use(express.json({
 const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
 const SIGNING_SECRET = "euaKbA93Qv6fNJdkvyYlpOfA6EVuAOhN";
 
-// ✅ VALIDATE SIGNATURE
+// SIGNATURE CHECK
 function isValidSignature(body, signature) {
     const hash = crypto
         .createHash("sha256")
@@ -27,7 +27,7 @@ function isValidSignature(body, signature) {
 app.post("/webhook", async (req, res) => {
     const signature = req.headers["signature"];
 
-    // 🔥 VALIDASI
+    // VALIDATE SIGNATURE
     if (!isValidSignature(req.rawBody, signature)) {
         console.log("❌ INVALID SIGNATURE");
         return res.sendStatus(403);
@@ -37,19 +37,19 @@ app.post("/webhook", async (req, res) => {
 
     console.log("FULL EVENT:", JSON.stringify(body));
 
-    // ✅ VERIFICATION
+    // VERIFICATION
     if (body.event_type === "event_verification") {
         return res.status(200).json(body.event);
     }
 
     try {
-        // 🔥 PERSONAL CHAT
+        // PERSONAL
         if (body.event_type === "message_from_bot_subscriber") {
             const seatalk_id = body.event?.seatalk_id;
 
             if (seatalk_id) {
                 const response = await axios.post(
-                    "https://openapi.seatalk.dev/open-apis/message/v2/send/",
+                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
                     {
                         receive_id: seatalk_id,
                         receive_id_type: "seatalk_id",
@@ -68,13 +68,13 @@ app.post("/webhook", async (req, res) => {
             }
         }
 
-        // 🔥 GROUP
+        // GROUP
         if (body.event_type === "new_mentioned_message_received_from_group_chat") {
             const group_id = body.event?.group_id;
 
             if (group_id) {
                 const response = await axios.post(
-                    "https://openapi.seatalk.dev/open-apis/message/v2/send/",
+                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
                     {
                         receive_id: group_id,
                         receive_id_type: "group_id",
@@ -101,7 +101,4 @@ app.post("/webhook", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running...");
-});
+app.listen(PORT, "0.0.0.0");
