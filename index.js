@@ -4,7 +4,6 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-// ❗ WAJIB ISI TOKEN BOT ASLI (BUKAN SIGNING SECRET)
 const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
 
 app.post("/webhook", async (req, res) => {
@@ -20,7 +19,7 @@ app.post("/webhook", async (req, res) => {
     }
 
     try {
-        // 🔥 PERSONAL CHAT (1 ON 1)
+        // 🔥 PERSONAL CHAT
         if (body.event_type === "message_from_bot_subscriber") {
             const seatalk_id = body.event?.seatalk_id;
 
@@ -28,11 +27,13 @@ app.post("/webhook", async (req, res) => {
 
             if (seatalk_id) {
                 await axios.post(
-                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
+                    "https://openapi.seatalk.io/open-apis/message/v2/send_message",
                     {
                         receive_id: seatalk_id,
                         receive_id_type: "seatalk_id",
-                        text: "Approved",
+                        content: {
+                            text: "Approved"
+                        },
                         msg_type: "text"
                     },
                     {
@@ -47,16 +48,19 @@ app.post("/webhook", async (req, res) => {
 
         // 🔥 GROUP (MENTION)
         if (body.event_type === "new_mentioned_message_received_from_group_chat") {
-            const thread_id = body.event?.message?.thread_id;
+            const group_id = body.event?.group_id;
 
-            console.log("GROUP THREAD:", thread_id);
+            console.log("GROUP ID:", group_id);
 
-            if (thread_id) {
+            if (group_id) {
                 await axios.post(
-                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
+                    "https://openapi.seatalk.io/open-apis/message/v2/send_message",
                     {
-                        thread_id: thread_id,
-                        text: "Approved",
+                        receive_id: group_id,
+                        receive_id_type: "group_id",
+                        content: {
+                            text: "Approved"
+                        },
                         msg_type: "text"
                     },
                     {
