@@ -1,38 +1,22 @@
-const http = require("http");
+const express = require("express");
 
-const server = http.createServer((req, res) => {
+const app = express();
+app.use(express.json());
 
-    if (req.method === "POST" && req.url === "/webhook") {
-        let body = "";
+app.post("/webhook", (req, res) => {
+    const body = req.body;
 
-        req.on("data", chunk => {
-            body += chunk;
-        });
+    if (body.event_type === "event_verification") {
+        const challenge = body.event.seatalk_challenge;
 
-        req.on("end", () => {
-            try {
-                const data = JSON.parse(body);
-
-                if (data.event_type === "event_verification") {
-                    const challenge = data.event.seatalk_challenge;
-
-                    // 🔥 TANPA HEADER APAPUN
-                    return res.end(challenge);
-                }
-
-            } catch (e) {}
-
-            return res.end("ok");
-        });
-
-        return;
+        return res
+            .status(200)
+            .type("text/plain")
+            .send(challenge);
     }
 
-    res.end("ok");
+    return res.sendStatus(200);
 });
 
 const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, "0.0.0.0", () => {
-    console.log("Server running on", PORT);
-});
+app.listen(PORT, "0.0.0.0");
