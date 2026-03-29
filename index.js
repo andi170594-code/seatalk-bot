@@ -12,7 +12,7 @@ app.use(express.json({
 }));
 
 // ❗ isi ini
-const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
+const BOT_TOKEN = "TOKEN_YANG_BARU_DARI_SEATALK";
 const SIGNING_SECRET = "euaKbA93Qv6fNJdkvyYlpOfA6EVuAOhN";
 
 // validasi signature
