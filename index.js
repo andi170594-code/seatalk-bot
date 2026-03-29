@@ -1,31 +1,37 @@
-const express = require("express");
+const http = require("http");
 
-const app = express();
+const server = http.createServer((req, res) => {
+    if (req.method === "POST" && req.url === "/webhook") {
+        let body = "";
 
-// ✅ Pakai JSON parser (INI KUNCI)
-app.use(express.json());
+        req.on("data", chunk => {
+            body += chunk;
+        });
 
-app.post("/webhook", (req, res) => {
-    const body = req.body;
+        req.on("end", () => {
+            try {
+                const data = JSON.parse(body);
 
-    // 🔥 HANDLE VERIFICATION
-    if (body.event_type === "event_verification") {
-        const challenge = body.event?.seatalk_challenge;
+                if (data.event_type === "event_verification") {
+                    const challenge = data.event.seatalk_challenge;
 
-        if (challenge) {
-            // ❗ HARUS TEXT PLAIN & EXACT
-            res.setHeader("Content-Type", "text/plain");
-            return res.status(200).send(challenge);
-        }
+                    // 🔥 RAW RESPONSE TANPA FRAMEWORK
+                    res.writeHead(200, { "Content-Type": "text/plain" });
+                    return res.end(challenge);
+                }
+
+            } catch (e) {}
+
+            res.writeHead(200);
+            res.end("ok");
+        });
+    } else {
+        res.writeHead(404);
+        res.end();
     }
-
-    // default response
-    return res.sendStatus(200);
 });
 
-// ❗ PORT WAJIB DARI RAILWAY
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-    console.log("Running on", PORT);
+server.listen(PORT, "0.0.0.0", () => {
+    console.log("Server running on", PORT);
 });
