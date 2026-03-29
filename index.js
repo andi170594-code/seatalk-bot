@@ -4,15 +4,18 @@ const crypto = require("crypto");
 
 const app = express();
 
+// ambil raw body (buat signature)
 app.use(express.json({
     verify: (req, res, buf) => {
         req.rawBody = buf;
     }
 }));
 
+// ❗ isi ini
 const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
 const SIGNING_SECRET = "euaKbA93Qv6fNJdkvyYlpOfA6EVuAOhN";
 
+// validasi signature
 function isValidSignature(body, signature) {
     const hash = crypto
         .createHash("sha256")
@@ -26,12 +29,15 @@ app.post("/webhook", async (req, res) => {
     const signature = req.headers["signature"];
 
     if (!isValidSignature(req.rawBody, signature)) {
+        console.log("❌ INVALID SIGNATURE");
         return res.sendStatus(403);
     }
 
     const body = req.body;
 
-    // ✅ verification
+    console.log("FULL EVENT:", JSON.stringify(body));
+
+    // verification
     if (body.event_type === "event_verification") {
         return res.status(200).json(body.event);
     }
@@ -54,14 +60,14 @@ app.post("/webhook", async (req, res) => {
     if (target_id) {
         try {
             await axios.post(
-                "https://openapi.seatalk.io/open-apis/message/v2/send/",
+                "https://openapi.seatalk.io/messaging/v2/send_message",
                 {
                     receive_id: target_id,
                     receive_id_type: target_type,
                     msg_type: "text",
-                    content: JSON.stringify({
+                    content: {
                         text: "Approved"
-                    })
+                    }
                 },
                 {
                     headers: {
@@ -71,7 +77,7 @@ app.post("/webhook", async (req, res) => {
                 }
             );
 
-            console.log("✅ SENT");
+            console.log("✅ SENT SUCCESS");
         } catch (err) {
             console.log("❌ SEND ERROR:", err.response?.data || err.message);
         }
@@ -80,4 +86,6 @@ app.post("/webhook", async (req, res) => {
     return res.sendStatus(200);
 });
 
-app.listen(process.env.PORT || 3000, "0.0.0.0");
+app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
+    console.log("Server running...");
+});
