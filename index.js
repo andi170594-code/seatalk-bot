@@ -19,7 +19,7 @@ app.post("/webhook", async (req, res) => {
     }
 
     try {
-        // 🔥 PERSONAL CHAT
+        // 🔥 PERSONAL
         if (body.event_type === "message_from_bot_subscriber") {
             const seatalk_id = body.event?.seatalk_id;
 
@@ -27,13 +27,11 @@ app.post("/webhook", async (req, res) => {
 
             if (seatalk_id) {
                 await axios.post(
-                    "https://openapi.seatalk.io/open-apis/message/v2/send_message",
+                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
                     {
                         receive_id: seatalk_id,
                         receive_id_type: "seatalk_id",
-                        content: {
-                            text: "Approved"
-                        },
+                        text: "Approved",
                         msg_type: "text"
                     },
                     {
@@ -46,21 +44,19 @@ app.post("/webhook", async (req, res) => {
             }
         }
 
-        // 🔥 GROUP (MENTION)
+        // 🔥 GROUP
         if (body.event_type === "new_mentioned_message_received_from_group_chat") {
             const group_id = body.event?.group_id;
 
-            console.log("GROUP ID:", group_id);
+            console.log("GROUP:", group_id);
 
             if (group_id) {
                 await axios.post(
-                    "https://openapi.seatalk.io/open-apis/message/v2/send_message",
+                    "https://openapi.seatalk.io/open-apis/message/v2/send/",
                     {
                         receive_id: group_id,
                         receive_id_type: "group_id",
-                        content: {
-                            text: "Approved"
-                        },
+                        text: "Approved",
                         msg_type: "text"
                     },
                     {
