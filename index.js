@@ -4,18 +4,18 @@ const crypto = require("crypto");
 
 const app = express();
 
-// RAW BODY (buat signature)
+// ambil raw body (buat signature)
 app.use(express.json({
   verify: (req, res, buf) => {
     req.rawBody = buf;
   }
 }));
 
-// ❗ GANTI INI
-const BOT_TOKEN = "ISI_BOT_TOKEN_KAMU";
+// 🔥 WAJIB GANTI INI
+const BOT_TOKEN = "PASTE_BOT_TOKEN_DISINI";
 const SIGNING_SECRET = "euaKbA93Qv6fNJdkvyYlpOfA6EVuAOhN";
 
-// VALIDASI SIGNATURE
+// validasi signature
 function isValidSignature(body, signature) {
   const hash = crypto
     .createHash("sha256")
@@ -36,7 +36,7 @@ app.post("/webhook", async (req, res) => {
   const body = req.body;
   console.log("FULL EVENT:", JSON.stringify(body));
 
-  // VERIFICATION
+  // verification
   if (body.event_type === "event_verification") {
     return res.status(200).json(body.event);
   }
@@ -44,19 +44,19 @@ app.post("/webhook", async (req, res) => {
   let target_id = null;
   let target_type = null;
 
-  // PERSONAL
+  // personal chat
   if (body.event_type === "message_from_bot_subscriber") {
     target_id = body.event?.seatalk_id;
     target_type = "seatalk_id";
   }
 
-  // GROUP
+  // group mention
   if (body.event_type === "new_mentioned_message_received_from_group_chat") {
     target_id = body.event?.group_id;
     target_type = "group_id";
   }
 
-  // KIRIM MESSAGE
+  // kirim balasan
   if (target_id) {
     try {
       await axios.post(
@@ -87,5 +87,5 @@ app.post("/webhook", async (req, res) => {
 });
 
 app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
-  console.log("Server running...");
+  console.log("🚀 Server running...");
 });
